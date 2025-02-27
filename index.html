@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VSCodeForge</title>
+    <!-- Tailwind CSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- JSZip and FileSaver CDNs for ZIP functionality -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        /* Custom styles for dark mode, animations, and modal */
+        :root {
+            --bg-color: #fff;
+            --text-color: #333;
+            --card-bg: #f5f5f5;
+        }
+        .dark {
+            --bg-color: #333;
+            --text-color: #fff;
+            --card-bg: #444;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+        .tab-content {
+            transition: opacity 0.3s ease-in-out;
+            opacity: 1;
+        }
+        .tab-content.hidden {
+            opacity: 0;
+        }
+        .command-item {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        #alertModal {
+            backdrop-filter: blur(5px);
+        }
+        .code-preview pre {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .dark .code-preview pre {
+            background-color: #555;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8 font-sans">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header with Dark Mode Toggle -->
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold">VSCodeForge</h1>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="darkModeToggle" class="sr-only peer">
+                <div class="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-blue-600 transition duration-300"></div>
+                <span class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></span>
+            </label>
+        </div>
+        <div class="rounded-lg shadow-md p-4 md:p-6" style="background-color: var(--card-bg);">
+            <!-- Tabs -->
+            <div class="flex border-b border-gray-300 mb-6">
+                <button class="tab active px-4 py-2 font-medium text-blue-600 border-b-2 border-blue-600" data-tab="basic-info">Basic Info</button>
+                <button class="tab px-4 py-2 font-medium text-gray-600" data-tab="commands">Commands</button>
+                <button class="tab px-4 py-2 font-medium text-gray-600" data-tab="preview">Preview</button>
+            </div>
+            <!-- Basic Info Tab -->
+            <div id="basic-info" class="tab-content">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="name" class="block font-medium mb-1">Plugin Name</label>
+                        <input type="text" id="name" class="w-full rounded border px-3 py-2" title="Lowercase, hyphens allowed (e.g., my-extension)">
+                    </div>
+                    <div>
+                        <label for="displayName" class="block font-medium mb-1">Display Name</label>
+                        <input type="text" id="displayName" class="w-full rounded border px-3 py-2" title="The name shown in VS Code">
+                    </div>
+                    <div>
+                        <label for="description" class="block font-medium mb-1">Description</label>
+                        <input type="text" id="description" class="w-full rounded border px-3 py-2" title="A brief description of your extension">
+                    </div>
+                    <div>
+                        <label for="version" class="block font-medium mb-1">Version</label>
+                        <input type="text" id="version" value="0.0.1" class="w-full rounded border px-3 py-2" title="Semantic version (e.g., 1.0.0)">
+                    </div>
+                    <div>
+                        <label for="publisher" class="block font-medium mb-1">Publisher</label>
+                        <input type="text" id="publisher" class="w-full rounded border px-3 py-2" title="Your publisher name">
+                    </div>
+                    <div>
+                        <label for="engines" class="block font-medium mb-1">VS Code Engine</label>
+                        <input type="text" id="engines" value="^1.60.0" class="w-full rounded border px-3 py-2" title="Minimum VS Code version (e.g., ^1.60.0)">
+                    </div>
+                </div>
+            </div>
+            <!-- Commands Tab -->
+            <div id="commands" class="tab-content hidden">
+                <div class="mb-6">
+                    <h3 class="text-xl font-semibold mb-2">Add Command</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div>
+                            <label for="commandId" class="block font-medium mb-1">Command ID</label>
+                            <input type="text" id="commandId" class="w-full rounded border px-3 py-2" title="e.g., extension.helloWorld">
+                        </div>
+                        <div>
+                            <label for="commandTitle" class="block font-medium mb-1">Title</label>
+                            <input type="text" id="commandTitle" class="w-full rounded border px-3 py-2" title="Command name in Command Palette">
+                        </div>
+                        <div>
+                            <label for="commandFunction" class="block font-medium mb-1">Function Name</label>
+                            <input type="text" id="commandFunction" class="w-full rounded border px-3 py-2" title="JavaScript function name">
+                        </div>
+                    </div>
+                    <button id="addCommand" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add Command</button>
+                </div>
+                <div id="commandsList">
+                    <h4 class="font-medium mb-2">Added Commands:</h4>
+                    <div id="commandItems" class="space-y-3"></div>
+                </div>
+            </div>
+            <!-- Preview Tab -->
+            <div id="preview" class="tab-content hidden">
+                <div class="mb-6">
+                    <h3 class="text-xl font-semibold mb-4">Generated Extension Files</h3>
+                    <div class="mb-6">
+                        <h4 class="font-medium">Folder Structure</h4>
+                        <div class="code-preview" id="folderStructure"><pre><code class="language-plain"></code></pre></div>
+                    </div>
+                    <div class="mb-6">
+                        <h4 class="font-medium">package.json</h4>
+                        <div class="code-preview" id="packageJson"><pre><code class="language-json"></code></pre></div>
+                    </div>
+                    <div>
+                        <h4 class="font-medium">extension.js</h4>
+                        <div class="code-preview" id="extensionJs"><pre><code class="language-javascript"></code></pre></div>
+                    </div>
+                </div>
+                <button id="downloadZip" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Download ZIP</button>
+            </div>
+        </div>
+    </div>
+    <!-- Custom Alert Modal -->
+    <div id="alertModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-sm w-full">
+            <p id="alertMessage" class="mb-4"></p>
+            <button id="closeAlert" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full">OK</button>
+        </div>
+    </div>
+    <script>
+        // State management
+        let basicInfo = {
+            name: '', displayName: '', description: '', version: '0.0.1',
+            publisher: '', engines: '^1.60.0'
+        };
+        let commands = [];
+
+        // DOM elements
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const commandItems = document.getElementById('commandItems');
+
+        // Tab switching
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabId = tab.dataset.tab;
+                tabs.forEach(t => {
+                    t.classList.remove('active', 'text-blue-600', 'border-b-2', 'border-blue-600');
+                    t.classList.add('text-gray-600');
+                });
+                tab.classList.add('active', 'text-blue-600', 'border-b-2', 'border-blue-600');
+                tabContents.forEach(content => content.classList.add('hidden'));
+                document.getElementById(tabId).classList.remove('hidden');
+                if (tabId === 'preview') generatePreview();
+            });
+        });
+
+        // Dark mode toggle
+        document.getElementById('darkModeToggle').addEventListener('change', (e) => {
+            document.body.classList.toggle('dark', e.target.checked);
+        });
+
+        // Bind inputs to basicInfo and live preview
+        ['name', 'displayName', 'description', 'version', 'publisher', 'engines'].forEach(id => {
+            const input = document.getElementById(id);
+            input.addEventListener('input', () => {
+                basicInfo[id] = input.value;
+                if (document.querySelector('.tab.active').dataset.tab === 'preview') generatePreview();
+            });
+        });
+
+        // Command management
+        document.getElementById('addCommand').addEventListener('click', () => {
+            const id = document.getElementById('commandId').value.trim();
+            const title = document.getElementById('commandTitle').value.trim();
+            const func = document.getElementById('commandFunction').value.trim();
+            if (id && title && func) {
+                commands.push({ id, title, function: func });
+                updateCommandsList();
+                ['commandId', 'commandTitle', 'commandFunction'].forEach(id => document.getElementById(id).value = '');
+                generatePreview();
+            } else {
+                showAlert('Please fill in all command fields.');
+            }
+        });
+
+        function updateCommandsList() {
+            commandItems.innerHTML = '';
+            commands.forEach((cmd, index) => {
+                const div = document.createElement('div');
+                div.className = 'command-item p-3 border rounded flex justify-between items-center';
+                div.innerHTML = `
+                    <div>
+                        <span class="font-medium">${cmd.id}</span> - ${cmd.title}
+                    </div>
+                    <button class="text-red-500 hover:text-red-700" data-index="${index}">Remove</button>
+                `;
+                commandItems.appendChild(div);
+            });
+            document.querySelectorAll('#commandItems button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    commands.splice(parseInt(btn.dataset.index), 1);
+                    updateCommandsList();
+                    generatePreview();
+                });
+            });
+        }
+
+        // Validation
+        function validateInputs() {
+            const errors = [];
+            if (!basicInfo.name || !/^[a-z0-9-]+$/.test(basicInfo.name)) errors.push('Plugin Name must be lowercase with hyphens only.');
+            if (!basicInfo.version || !/^\d+\.\d+\.\d+$/.test(basicInfo.version)) errors.push('Version must be in semver format (e.g., 0.0.1).');
+            if (!basicInfo.publisher) errors.push('Publisher is required.');
+            const commandIds = commands.map(c => c.id);
+            if (new Set(commandIds).size !== commandIds.length) errors.push('Command IDs must be unique.');
+            commands.forEach(c => {
+                if (!/^[a-z0-9-]+\.[a-z0-9-]+$/.test(c.id)) errors.push(`Command ID "${c.id}" must be in format "extension.command".`);
+            });
+            return errors;
+        }
+
+        // Preview generation
+        function generatePreview() {
+            const errors = validateInputs();
+            if (errors.length > 0) {
+                showAlert(errors.join('\n'));
+                return;
+            }
+            const pluginName = basicInfo.name || 'my-extension';
+            document.getElementById('folderStructure').querySelector('code').textContent = `${pluginName}/\n├── src/\n│   └── extension.js\n├── package.json\n├── README.md\n├── .gitignore\n└── CHANGELOG.md`;
+            document.getElementById('packageJson').querySelector('code').textContent = JSON.stringify({
+                name: pluginName,
+                displayName: basicInfo.displayName || 'My Extension',
+                description: basicInfo.description || '',
+                version: basicInfo.version,
+                publisher: basicInfo.publisher,
+                engines: { vscode: basicInfo.engines },
+                contributes: { commands: commands.map(c => ({ command: c.id, title: c.title })) },
+                activationEvents: commands.map(c => `onCommand:${c.id}`)
+            }, null, 2);
+            document.getElementById('extensionJs').querySelector('code').textContent = `
+const vscode = require('vscode');
+
+function activate(context) {
+    console.log('${basicInfo.displayName || 'My Extension'} is now active!');
+${commands.map(c => `
+    let ${c.function} = vscode.commands.registerCommand('${c.id}', () => {
+        vscode.window.showInformationMessage('Hello from ${c.title}!');
+    });
+    context.subscriptions.push(${c.function});
+`).join('')}
+}
+
+function deactivate() {}
+
+module.exports = { activate, deactivate };
+            `.trim();
+        }
+
+        // ZIP generation
+        document.getElementById('downloadZip').addEventListener('click', () => {
+            const errors = validateInputs();
+            if (errors.length > 0) {
+                showAlert(errors.join('\n'));
+                return;
+            }
+            const zip = new JSZip();
+            const folder = zip.folder(basicInfo.name || 'my-extension');
+            folder.file('src/extension.js', document.getElementById('extensionJs').querySelector('code').textContent);
+            folder.file('package.json', document.getElementById('packageJson').querySelector('code').textContent);
+            folder.file('README.md', `# ${basicInfo.displayName || 'My Extension'}\n\n${basicInfo.description || ''}`);
+            folder.file('.gitignore', 'node_modules\n*.log');
+            folder.file('CHANGELOG.md', '# Changelog\n\n## 0.0.1\n- Initial release');
+            zip.generateAsync({ type: 'blob' }).then(blob => {
+                saveAs(blob, `${basicInfo.name || 'my-extension'}.zip`);
+            });
+        });
+
+        // Custom alert
+        function showAlert(message) {
+            document.getElementById('alertMessage').textContent = message;
+            document.getElementById('alertModal').classList.remove('hidden');
+        }
+        document.getElementById('closeAlert').addEventListener('click', () => {
+            document.getElementById('alertModal').classList.add('hidden');
+        });
+    </script>
+</body>
+</html>
