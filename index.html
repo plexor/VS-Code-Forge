@@ -6,311 +6,339 @@
     <title>VSCodeForge</title>
     <!-- Tailwind CSS CDN -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <!-- JSZip and FileSaver CDNs for ZIP functionality -->
+    <!-- Google Fonts: Orbitron and Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <!-- JSZip and FileSaver for ZIP generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <!-- Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.4.0/dist/confetti.browser.min.js"></script>
     <style>
-        /* Custom styles for dark mode, animations, and modal */
+        /* CSS Variables for Dark and Light Themes */
         :root {
-            --bg-color: #fff;
-            --text-color: #333;
-            --card-bg: #f5f5f5;
+            --bg-dark: #000000; /* Black background for dark mode */
+            --bg-light: #f0f0f0; /* Light gray for light mode */
+            --bg-fire: linear-gradient(135deg, #000000 0%, #FF4500 50%, #8B0000 100%);
+            --text-dark: #FFC107; /* Golden yellow for dark mode */
+            --text-light: #333333; /* Dark gray for light mode */
+            --glass-bg-dark: rgba(0, 0, 0, 0.5); /* Dark glass for dark mode */
+            --glass-bg-light: rgba(255, 255, 255, 0.7); /* Light glass for light mode */
+            --border-dark: rgba(255, 255, 255, 0.15);
+            --border-light: rgba(0, 0, 0, 0.15);
+            --accent-primary-dark: #FF4500; /* Bright orange */
+            --accent-primary-light: #FF4500;
+            --accent-secondary-dark: #FFC107; /* Golden yellow */
+            --accent-secondary-light: #FF4500;
         }
-        .dark {
-            --bg-color: #333;
-            --text-color: #fff;
-            --card-bg: #444;
-        }
+
+        /* Base Styles */
         body {
-            background-color: var(--bg-color);
+            font-family: 'Inter', sans-serif;
+            color: var(--text-color);
+            background: var(--background);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Dark Mode */
+        body.dark-mode {
+            --background: var(--bg-dark); /* Solid black background */
+            --text-color: var(--text-dark);
+            --glass-bg: var(--glass-bg-dark);
+            --border-color: var(--border-dark);
+            --accent-primary: var(--accent-primary-dark);
+            --accent-secondary: var(--accent-secondary-dark);
+        }
+
+        /* Light Mode */
+        body.light-mode {
+            --background: var(--bg-light); /* Light gray background */
+            --text-color: var(--text-light);
+            --glass-bg: var(--glass-bg-light);
+            --border-color: var(--border-light);
+            --accent-primary: var(--accent-primary-light);
+            --accent-secondary: var(--accent-secondary-light);
+        }
+
+        /* Fire Background Animation (Optional) */
+        body.fire-background {
+            background: var(--bg-fire);
+            background-size: 200% 200%;
+            animation: fireGradient 15s ease infinite;
+        }
+
+        @keyframes fireGradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Glassmorphism Effect */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Sticky Header */
+        header {
+            position: sticky;
+            top: 0;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            z-index: 10;
+            padding: 16px 0;
+        }
+
+        /* Tabs */
+        .tab {
+            padding: 16px 32px;
+            margin-right: 8px;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            transition: all 0.3s;
             color: var(--text-color);
         }
-        .tab-content {
-            transition: opacity 0.3s ease-in-out;
-            opacity: 1;
+        .tab.active {
+            background: var(--accent-primary);
+            color: #fff;
+            border-bottom: 3px solid var(--accent-secondary);
         }
-        .tab-content.hidden {
-            opacity: 0;
+
+        /* Inputs */
+        input {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 12px 16px;
+            border-radius: 8px;
+            transition: all 0.3s;
         }
-        .command-item {
-            animation: fadeIn 0.3s ease-in-out;
+        input:focus {
+            border-color: var(--accent-secondary);
+            box-shadow: 0 0 8px var(--accent-secondary);
+        }
+
+        /* Buttons */
+        button {
+            background: linear-gradient(90deg, var(--accent-primary), #8B0000);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+
+        /* CTA Button Press Effect */
+        .cta-button:active {
+            transform: scale(0.95);
+            transition: transform 0.1s;
+        }
+
+        /* Code Blocks */
+        pre {
+            background: #2A2A2A;
+            color: var(--text-color);
+            padding: 16px;
+            border-radius: 8px;
+            font-family: monospace;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--background);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-primary);
+            border-radius: 6px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #8B0000;
+        }
+
+        /* Animated Headers */
+        h3, h4 {
+            animation: fadeIn 1s ease-in-out;
         }
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        #alertModal {
-            backdrop-filter: blur(5px);
+
+        /* Parallax Effect for Sections */
+        .tab-content {
+            transform: translateY(50px);
+            opacity: 0;
+            transition: transform 0.5s ease, opacity 0.5s ease;
         }
-        .code-preview pre {
-            background-color: #f0f0f0;
-            padding: 10px;
-            border-radius: 5px;
-            overflow-x: auto;
-        }
-        .dark .code-preview pre {
-            background-color: #555;
+        .tab-content.visible {
+            transform: translateY(0);
+            opacity: 1;
         }
     </style>
 </head>
-<body class="min-h-screen p-4 md:p-8 font-sans">
+<body class="p-8 md:p-12 dark-mode"> <!-- Start with dark mode -->
     <div class="max-w-6xl mx-auto">
-        <!-- Header with Dark Mode Toggle -->
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-3xl font-bold">VSCodeForge</h1>
-            <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" id="darkModeToggle" class="sr-only peer">
-                <div class="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-blue-600 transition duration-300"></div>
-                <span class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></span>
-            </label>
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-12">
+            <div class="flex items-center space-x-4">
+                <h1 class="text-5xl font-bold" style="font-family: 'Orbitron', sans-serif;">VSCodeForge</h1>
+            </div>
+            <div class="flex space-x-4">
+                <button id="theme-toggle" class="border" style="border-color: var(--accent-secondary); color: var(--accent-secondary);">Switch to Light Mode</button>
+                <button id="startOver" class="border" style="border-color: var(--accent-secondary); color: var(--accent-secondary);">New Project</button>
+            </div>
+        </header>
+
+        <!-- Tabs -->
+        <nav class="flex mb-12">
+            <button class="tab active" data-tab="basic-info">Basic Info</button>
+            <button class="tab" data-tab="commands">Commands</button>
+            <button class="tab" data-tab="preview">Preview</button>
+        </nav>
+
+        <!-- Tab Content: Basic Info with CTA -->
+        <div class="glass tab-content visible" id="basic-info">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div><label class="block font-medium mb-2">Plugin Name</label><input type="text" id="name" class="w-full"></div>
+                <div><label class="block font-medium mb-2">Display Name</label><input type="text" id="displayName" class="w-full"></div>
+                <div><label class="block font-medium mb-2">Description</label><input type="text" id="description" class="w-full"></div>
+                <div><label class="block font-medium mb-2">Version</label><input type="text" id="version" value="0.0.1" class="w-full"></div>
+                <div><label class="block font-medium mb-2">Publisher</label><input type="text" id="publisher" class="w-full"></div>
+                <div><label class="block font-medium mb-2">VS Code Engine</label><input type="text" id="engines" value="^1.60.0" class="w-full"></div>
+            </div>
+            <!-- CTA Section -->
+            <div class="mt-8 p-6 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-lg shadow-lg">
+                <h2 class="text-2xl font-bold mb-2">Check Out My Latest Micro SaaS!</h2>
+                <p class="mb-4">A no-fuss tool to whip up VS Code extension skeletons. Drop in your basics, toss in some commands, and grab a ZIP with package.json and extension.js—ready to tweak and deploy to the Azure Developer Portal. Built for devs, by a dev. Give it a spin!</p>
+                <button class="cta-button bg-white text-orange-600 font-semibold py-2 px-4 rounded hover:bg-orange-100 transition">Try It Now</button>
+            </div>
         </div>
-        <div class="rounded-lg shadow-md p-4 md:p-6" style="background-color: var(--card-bg);">
-            <!-- Tabs -->
-            <div class="flex border-b border-gray-300 mb-6">
-                <button class="tab active px-4 py-2 font-medium text-blue-600 border-b-2 border-blue-600" data-tab="basic-info">Basic Info</button>
-                <button class="tab px-4 py-2 font-medium text-gray-600" data-tab="commands">Commands</button>
-                <button class="tab px-4 py-2 font-medium text-gray-600" data-tab="preview">Preview</button>
-            </div>
-            <!-- Basic Info Tab -->
-            <div id="basic-info" class="tab-content">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label for="name" class="block font-medium mb-1">Plugin Name</label>
-                        <input type="text" id="name" class="w-full rounded border px-3 py-2" title="Lowercase, hyphens allowed (e.g., my-extension)">
-                    </div>
-                    <div>
-                        <label for="displayName" class="block font-medium mb-1">Display Name</label>
-                        <input type="text" id="displayName" class="w-full rounded border px-3 py-2" title="The name shown in VS Code">
-                    </div>
-                    <div>
-                        <label for="description" class="block font-medium mb-1">Description</label>
-                        <input type="text" id="description" class="w-full rounded border px-3 py-2" title="A brief description of your extension">
-                    </div>
-                    <div>
-                        <label for="version" class="block font-medium mb-1">Version</label>
-                        <input type="text" id="version" value="0.0.1" class="w-full rounded border px-3 py-2" title="Semantic version (e.g., 1.0.0)">
-                    </div>
-                    <div>
-                        <label for="publisher" class="block font-medium mb-1">Publisher</label>
-                        <input type="text" id="publisher" class="w-full rounded border px-3 py-2" title="Your publisher name">
-                    </div>
-                    <div>
-                        <label for="engines" class="block font-medium mb-1">VS Code Engine</label>
-                        <input type="text" id="engines" value="^1.60.0" class="w-full rounded border px-3 py-2" title="Minimum VS Code version (e.g., ^1.60.0)">
-                    </div>
+
+        <!-- Tab Content: Commands -->
+        <div class="glass tab-content hidden" id="commands">
+            <div class="mb-8">
+                <h3 class="text-3xl font-semibold mb-4">Add Command</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-6">
+                    <div><label class="block font-medium mb-2">Command ID</label><input type="text" id="commandId" class="w-full"></div>
+                    <div><label class="block font-medium mb-2">Title</label><input type="text" id="commandTitle" class="w-full"></div>
+                    <div><label class="block font-medium mb-2">Function Name</label><input type="text" id="commandFunction" class="w-full"></div>
                 </div>
+                <button id="addCommand">Add Command</button>
             </div>
-            <!-- Commands Tab -->
-            <div id="commands" class="tab-content hidden">
-                <div class="mb-6">
-                    <h3 class="text-xl font-semibold mb-2">Add Command</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                        <div>
-                            <label for="commandId" class="block font-medium mb-1">Command ID</label>
-                            <input type="text" id="commandId" class="w-full rounded border px-3 py-2" title="e.g., extension.helloWorld">
-                        </div>
-                        <div>
-                            <label for="commandTitle" class="block font-medium mb-1">Title</label>
-                            <input type="text" id="commandTitle" class="w-full rounded border px-3 py-2" title="Command name in Command Palette">
-                        </div>
-                        <div>
-                            <label for="commandFunction" class="block font-medium mb-1">Function Name</label>
-                            <input type="text" id="commandFunction" class="w-full rounded border px-3 py-2" title="JavaScript function name">
-                        </div>
-                    </div>
-                    <button id="addCommand" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add Command</button>
-                </div>
-                <div id="commandsList">
-                    <h4 class="font-medium mb-2">Added Commands:</h4>
-                    <div id="commandItems" class="space-y-3"></div>
-                </div>
+            <div id="commandsList">
+                <h4 class="font-medium mb-4">Added Commands:</h4>
+                <div id="commandItems" class="space-y-4"></div>
             </div>
-            <!-- Preview Tab -->
-            <div id="preview" class="tab-content hidden">
-                <div class="mb-6">
-                    <h3 class="text-xl font-semibold mb-4">Generated Extension Files</h3>
-                    <div class="mb-6">
-                        <h4 class="font-medium">Folder Structure</h4>
-                        <div class="code-preview" id="folderStructure"><pre><code class="language-plain"></code></pre></div>
-                    </div>
-                    <div class="mb-6">
-                        <h4 class="font-medium">package.json</h4>
-                        <div class="code-preview" id="packageJson"><pre><code class="language-json"></code></pre></div>
-                    </div>
-                    <div>
-                        <h4 class="font-medium">extension.js</h4>
-                        <div class="code-preview" id="extensionJs"><pre><code class="language-javascript"></code></pre></div>
-                    </div>
-                </div>
-                <button id="downloadZip" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Download ZIP</button>
+        </div>
+
+        <!-- Tab Content: Preview -->
+        <div class="glass tab-content hidden" id="preview">
+            <div class="mb-8">
+                <h3 class="text-3xl font-semibold mb-6">Generated Files</h3>
+                <div class="mb-6"><h4 class="font-medium">Folder Structure</h4><pre id="folderStructure"></pre></div>
+                <div class="mb-6"><h4 class="font-medium">package.json</h4><pre id="packageJson"></pre></div>
+                <div><h4 class="font-medium">extension.js</h4><pre id="extensionJs"></pre></div>
             </div>
+            <button id="forgeExtension">Forge Extension</button>
         </div>
     </div>
-    <!-- Custom Alert Modal -->
-    <div id="alertModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-sm w-full">
-            <p id="alertMessage" class="mb-4"></p>
-            <button id="closeAlert" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full">OK</button>
+
+    <!-- Alert Modal -->
+    <div id="alertModal" class="hidden fixed inset-0 flex items-center justify-center">
+        <div class="glass max-w-md w-full p-6 rounded-lg">
+            <p id="alertMessage" class="mb-6"></p>
+            <button id="closeAlert" class="w-full">OK</button>
         </div>
     </div>
+
     <script>
-        // State management
-        let basicInfo = {
-            name: '', displayName: '', description: '', version: '0.0.1',
-            publisher: '', engines: '^1.60.0'
+        // Theme Toggle Functionality
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const body = document.body;
+
+        // Load saved theme or default to dark mode
+        const savedTheme = localStorage.getItem('theme') || 'dark-mode';
+        body.classList.add(savedTheme);
+        updateToggleButtonLabel();
+
+        // Toggle theme on button click
+        themeToggleBtn.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+            body.classList.toggle('light-mode');
+            const newTheme = body.classList.contains('dark-mode') ? 'dark-mode' : 'light-mode';
+            localStorage.setItem('theme', newTheme);
+            updateToggleButtonLabel();
+        });
+
+        // Update toggle button label
+        function updateToggleButtonLabel() {
+            const currentTheme = body.classList.contains('dark-mode') ? 'light' : 'dark';
+            themeToggleBtn.textContent = `Switch to ${currentTheme.charAt(0).toUpperCase() + currentTheme.slice(1)} Mode`;
+        }
+
+        // Confetti Function
+        function triggerConfetti() {
+            confetti({
+                particleCount: 100, // Number of confetti pieces
+                spread: 70,        // How wide the confetti spreads
+                origin: { y: 0.6 }, // Start slightly above center
+                colors: ['#FF4500', '#FFC107', '#8B0000'] // Custom colors: orange, golden yellow, dark red
+            });
+        }
+
+        // Attach Confetti to CTA Button
+        document.querySelector('.cta-button').addEventListener('click', function() {
+            triggerConfetti();
+            // Add any other actions here, like navigating or submitting a form
+        });
+
+        // State Management (Placeholder)
+        let state = { 
+            basicInfo: { 
+                name: '', 
+                displayName: '', 
+                description: '', 
+                version: '0.0.1', 
+                publisher: '', 
+                engines: '^1.60.0' 
+            }, 
+            commands: [] 
         };
-        let commands = [];
+        let activeTab = 'basic-info';
 
-        // DOM elements
-        const tabs = document.querySelectorAll('.tab');
-        const tabContents = document.querySelectorAll('.tab-content');
-        const commandItems = document.getElementById('commandItems');
-
-        // Tab switching
-        tabs.forEach(tab => {
+        // Tab Switching with Parallax Effect
+        document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
-                const tabId = tab.dataset.tab;
-                tabs.forEach(t => {
-                    t.classList.remove('active', 'text-blue-600', 'border-b-2', 'border-blue-600');
-                    t.classList.add('text-gray-600');
+                activeTab = tab.dataset.tab;
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                document.querySelectorAll('.tab-content').forEach(c => {
+                    c.classList.remove('visible');
+                    c.classList.add('hidden');
                 });
-                tab.classList.add('active', 'text-blue-600', 'border-b-2', 'border-blue-600');
-                tabContents.forEach(content => content.classList.add('hidden'));
-                document.getElementById(tabId).classList.remove('hidden');
-                if (tabId === 'preview') generatePreview();
+                const activeContent = document.getElementById(activeTab);
+                activeContent.classList.remove('hidden');
+                setTimeout(() => activeContent.classList.add('visible'), 50); // Trigger parallax animation
+                if (activeTab === 'preview') generatePreview();
             });
         });
 
-        // Dark mode toggle
-        document.getElementById('darkModeToggle').addEventListener('change', (e) => {
-            document.body.classList.toggle('dark', e.target.checked);
-        });
-
-        // Bind inputs to basicInfo and live preview
-        ['name', 'displayName', 'description', 'version', 'publisher', 'engines'].forEach(id => {
-            const input = document.getElementById(id);
-            input.addEventListener('input', () => {
-                basicInfo[id] = input.value;
-                if (document.querySelector('.tab.active').dataset.tab === 'preview') generatePreview();
-            });
-        });
-
-        // Command management
-        document.getElementById('addCommand').addEventListener('click', () => {
-            const id = document.getElementById('commandId').value.trim();
-            const title = document.getElementById('commandTitle').value.trim();
-            const func = document.getElementById('commandFunction').value.trim();
-            if (id && title && func) {
-                commands.push({ id, title, function: func });
-                updateCommandsList();
-                ['commandId', 'commandTitle', 'commandFunction'].forEach(id => document.getElementById(id).value = '');
-                generatePreview();
-            } else {
-                showAlert('Please fill in all command fields.');
-            }
-        });
-
-        function updateCommandsList() {
-            commandItems.innerHTML = '';
-            commands.forEach((cmd, index) => {
-                const div = document.createElement('div');
-                div.className = 'command-item p-3 border rounded flex justify-between items-center';
-                div.innerHTML = `
-                    <div>
-                        <span class="font-medium">${cmd.id}</span> - ${cmd.title}
-                    </div>
-                    <button class="text-red-500 hover:text-red-700" data-index="${index}">Remove</button>
-                `;
-                commandItems.appendChild(div);
-            });
-            document.querySelectorAll('#commandItems button').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    commands.splice(parseInt(btn.dataset.index), 1);
-                    updateCommandsList();
-                    generatePreview();
-                });
-            });
-        }
-
-        // Validation
-        function validateInputs() {
-            const errors = [];
-            if (!basicInfo.name || !/^[a-z0-9-]+$/.test(basicInfo.name)) errors.push('Plugin Name must be lowercase with hyphens only.');
-            if (!basicInfo.version || !/^\d+\.\d+\.\d+$/.test(basicInfo.version)) errors.push('Version must be in semver format (e.g., 0.0.1).');
-            if (!basicInfo.publisher) errors.push('Publisher is required.');
-            const commandIds = commands.map(c => c.id);
-            if (new Set(commandIds).size !== commandIds.length) errors.push('Command IDs must be unique.');
-            commands.forEach(c => {
-                if (!/^[a-z0-9-]+\.[a-z0-9-]+$/.test(c.id)) errors.push(`Command ID "${c.id}" must be in format "extension.command".`);
-            });
-            return errors;
-        }
-
-        // Preview generation
+        // Placeholder for generatePreview (implement as needed)
         function generatePreview() {
-            const errors = validateInputs();
-            if (errors.length > 0) {
-                showAlert(errors.join('\n'));
-                return;
-            }
-            const pluginName = basicInfo.name || 'my-extension';
-            document.getElementById('folderStructure').querySelector('code').textContent = `${pluginName}/\n├── src/\n│   └── extension.js\n├── package.json\n├── README.md\n├── .gitignore\n└── CHANGELOG.md`;
-            document.getElementById('packageJson').querySelector('code').textContent = JSON.stringify({
-                name: pluginName,
-                displayName: basicInfo.displayName || 'My Extension',
-                description: basicInfo.description || '',
-                version: basicInfo.version,
-                publisher: basicInfo.publisher,
-                engines: { vscode: basicInfo.engines },
-                contributes: { commands: commands.map(c => ({ command: c.id, title: c.title })) },
-                activationEvents: commands.map(c => `onCommand:${c.id}`)
-            }, null, 2);
-            document.getElementById('extensionJs').querySelector('code').textContent = `
-const vscode = require('vscode');
-
-function activate(context) {
-    console.log('${basicInfo.displayName || 'My Extension'} is now active!');
-${commands.map(c => `
-    let ${c.function} = vscode.commands.registerCommand('${c.id}', () => {
-        vscode.window.showInformationMessage('Hello from ${c.title}!');
-    });
-    context.subscriptions.push(${c.function});
-`).join('')}
-}
-
-function deactivate() {}
-
-module.exports = { activate, deactivate };
-            `.trim();
+            // Add your preview generation logic here
         }
-
-        // ZIP generation
-        document.getElementById('downloadZip').addEventListener('click', () => {
-            const errors = validateInputs();
-            if (errors.length > 0) {
-                showAlert(errors.join('\n'));
-                return;
-            }
-            const zip = new JSZip();
-            const folder = zip.folder(basicInfo.name || 'my-extension');
-            folder.file('src/extension.js', document.getElementById('extensionJs').querySelector('code').textContent);
-            folder.file('package.json', document.getElementById('packageJson').querySelector('code').textContent);
-            folder.file('README.md', `# ${basicInfo.displayName || 'My Extension'}\n\n${basicInfo.description || ''}`);
-            folder.file('.gitignore', 'node_modules\n*.log');
-            folder.file('CHANGELOG.md', '# Changelog\n\n## 0.0.1\n- Initial release');
-            zip.generateAsync({ type: 'blob' }).then(blob => {
-                saveAs(blob, `${basicInfo.name || 'my-extension'}.zip`);
-            });
-        });
-
-        // Custom alert
-        function showAlert(message) {
-            document.getElementById('alertMessage').textContent = message;
-            document.getElementById('alertModal').classList.remove('hidden');
-        }
-        document.getElementById('closeAlert').addEventListener('click', () => {
-            document.getElementById('alertModal').classList.add('hidden');
-        });
     </script>
 </body>
 </html>
