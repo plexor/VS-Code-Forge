@@ -377,7 +377,7 @@
 
         // Placeholder for generatePreview (implement as needed)
         function generatePreview() {
-            // Add your preview generation logic here
+            // Your preview generation logic (if any) goes here.
         }
 
         // Command Validation and Addition
@@ -415,6 +415,57 @@
                 }, 
                 commands: [] 
             };
+        });
+
+        // Forge Extension Functionality
+        document.getElementById('forgeExtension').addEventListener('click', () => {
+            // Gather basic info values
+            const name = document.getElementById('name').value.trim();
+            const displayName = document.getElementById('displayName').value.trim();
+            const description = document.getElementById('description').value.trim();
+            const version = document.getElementById('version').value.trim();
+            const publisher = document.getElementById('publisher').value.trim();
+            const engines = document.getElementById('engines').value.trim();
+
+            // Validate basic info fields
+            if (!name || !displayName || !description || !version || !publisher || !engines) {
+                alert("Please fill in all basic info fields before forging the extension.");
+                return;
+            }
+
+            // Generate package.json content
+            const packageJson = {
+                name,
+                displayName,
+                description,
+                version,
+                publisher,
+                engines: { vscode: engines },
+                activationEvents: state.commands.length > 0 ? [`onCommand:${state.commands[0].id}`] : [],
+                main: "./extension.js",
+                contributes: {
+                    commands: state.commands.map(cmd => ({
+                        command: cmd.id,
+                        title: cmd.title
+                    }))
+                }
+            };
+
+            // Generate extension.js content
+            let commandsRegistration = "";
+            state.commands.forEach(cmd => {
+                commandsRegistration += `// Command: ${cmd.id} – ${cmd.functionName}\n`;
+            });
+            const extensionJs = `// VS Code Extension\n\nfunction activate(context) {\n    console.log('Extension activated');\n    ${commandsRegistration}\n}\n\nfunction deactivate() {}\n\nmodule.exports = { activate, deactivate };\n`;
+
+            // Create ZIP using JSZip and trigger download with FileSaver
+            const zip = new JSZip();
+            zip.file("package.json", JSON.stringify(packageJson, null, 2));
+            zip.file("extension.js", extensionJs);
+            zip.generateAsync({type:"blob"})
+                .then(function(content) {
+                    saveAs(content, "vscode-extension.zip");
+                });
         });
     </script>
 </body>
